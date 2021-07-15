@@ -1,5 +1,5 @@
-﻿using BookHouseApp.BuisnessLogic.DTOS.Author;
-using BookHouseApp.BuisnessLogic.Mapping;
+﻿using AutoMapper;
+using BookHouseApp.BuisnessLogic.DTOS.Author;
 using BookHouseApp.BuisnessLogic.Services.Contracts;
 using BookHouseApp.DataAccess.Database;
 using BookHouseApp.DataAccess.Entities;
@@ -12,15 +12,20 @@ namespace BookHouseApp.BuisnessLogic.Services
     public class AuthorService : IAuthorsService
     {
         private readonly DatabaseContext _databaseContext;
+        private readonly IMapper _mapper;
 
-        public AuthorService(DatabaseContext databaseContext)
+        public AuthorService(DatabaseContext databaseContext, IMapper mapper)
         {
             _databaseContext = databaseContext;
+            _mapper = mapper;
         }
 
-        public Task Add(CreateAuthorDTO createAuthorDTO)
+        public async Task Add(CreateAuthorDTO createAuthorDTO)
         {
-            throw new NotImplementedException();
+            Author author = _mapper.Map<CreateAuthorDTO, Author>(createAuthorDTO);
+
+            await _databaseContext.Authors.AddAsync(author);
+            await _databaseContext.SaveChangesAsync();
         }
 
         public Task DeleteById(int id)
@@ -32,18 +37,20 @@ namespace BookHouseApp.BuisnessLogic.Services
         {
             Author[] authors = await _databaseContext.Authors
                 .AsNoTracking()
+                .Include(author => author.Books)
                 .ToArrayAsync();
 
-            return Mapper.MapFromAuthorToDtos(authors);
+            return _mapper.Map<Author[], AuthorDTO[]>(authors);
         }
 
         public async Task<AuthorDTO> GetById(int id)
         {
             Author author = await _databaseContext.Authors
                 .AsNoTracking()
+                .Include(author => author.Books)
                 .SingleOrDefaultAsync(author => author.Id == id);
 
-            return Mapper.MapFromAuthorToDto(author);
+            return _mapper.Map<Author, AuthorDTO>(author);
         }
 
         public Task Update(int id, UpdateAuthorDTO updateAuthorDTO)

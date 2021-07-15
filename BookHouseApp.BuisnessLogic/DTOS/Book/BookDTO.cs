@@ -1,7 +1,4 @@
-﻿
-using BookHouseApp.BuisnessLogic.DTOS.Author;
-
-namespace BookHouseApp.BuisnessLogic.DTOS.Book
+﻿namespace BookHouseApp.BuisnessLogic.DTOS.Book
 {
     public class BookDTO
     {
@@ -11,6 +8,6 @@ namespace BookHouseApp.BuisnessLogic.DTOS.Book
         public string Description { get; set; }
         public int Year { get; set; }
         public int AuthorId { get; set; }
-        public AuthorDTO Author { get; set; }
+        public string Author { get; set; }
     }
 }

@@ -1,3 +1,4 @@
+using BookHouseApp.BuisnessLogic.Mapping;
 using BookHouseApp.BuisnessLogic.Services;
 using BookHouseApp.BuisnessLogic.Services.Contracts;
 using BookHouseApp.DataAccess.Database;
@@ -25,6 +26,7 @@ namespace BookHouse.API
             services.AddDbContext<DatabaseContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("DatabaseContext")));
 
+            services.AddAutoMapper(config => config.AddMaps(typeof(AuthorProfile).Assembly));
             services.AddScoped<IAuthorsService, AuthorService>();
             
             services.AddControllers();

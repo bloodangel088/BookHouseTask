@@ -21,5 +21,19 @@ namespace BookHouse.API.Controllers
         {
             return await _authorsService.GetAll();
         }
+
+        [HttpGet("{id}")]
+        public async Task<AuthorDTO> Get([FromRoute(Name = "id")] int authorId)
+        {
+            return await _authorsService.GetById(authorId);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] CreateAuthorDTO createAuthorDTO)
+        {
+            await _authorsService.Add(createAuthorDTO);
+
+            return NoContent();
+        }
     }
 }
