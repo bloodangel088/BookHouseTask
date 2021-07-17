@@ -28,9 +28,12 @@ namespace BookHouseApp.BuisnessLogic.Services
             await _databaseContext.SaveChangesAsync();
         }
 
-        public Task DeleteById(int id)
+        public async Task DeleteById(int id)
         {
-            throw new NotImplementedException();
+            Author authorToDelete = await _databaseContext.Authors.FindAsync(id);
+
+            _databaseContext.Authors.Remove(authorToDelete);
+            await _databaseContext.SaveChangesAsync();
         }
 
         public async Task<AuthorDTO[]> GetAll()
@@ -53,9 +56,14 @@ namespace BookHouseApp.BuisnessLogic.Services
             return _mapper.Map<Author, AuthorDTO>(author);
         }
 
-        public Task Update(int id, UpdateAuthorDTO updateAuthorDTO)
+        public async Task Update(int id, AuthorDTO updateAuthorDTO)
         {
-            throw new NotImplementedException();
+            Author existingAuthor = await _databaseContext.Authors.SingleAsync(author => author.Id == id);
+
+            _mapper.Map(updateAuthorDTO, existingAuthor);
+
+            _databaseContext.Update(existingAuthor);
+            await _databaseContext.SaveChangesAsync();
         }
     }
 }

@@ -10,7 +10,8 @@ namespace BookHouseApp.BuisnessLogic.Mapping
         public BooksProfile()
         {
             CreateMap<Book, BookDTO>()
-                .ForMember(dto => dto.Author, expressions => expressions.MapFrom(author => author.Name));
+                .ForMember(dto => dto.Author, rule => rule.MapFrom(book => book.Author.AuthorName))
+                .ForMember(dto => dto.Title, rule => rule.MapFrom(book => book.Name));
 
             CreateMap<Genre, GenreDTO>();
         }

@@ -1,5 +1,7 @@
-﻿using BookHouseApp.BuisnessLogic.DTOS.Author;
+﻿using AutoMapper;
+using BookHouseApp.BuisnessLogic.DTOS.Author;
 using BookHouseApp.BuisnessLogic.Services.Contracts;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 
@@ -10,10 +12,12 @@ namespace BookHouse.API.Controllers
     public class AuthorsController : ControllerBase
     {
         private readonly IAuthorsService _authorsService;
+        private readonly IMapper _mapper;
 
-        public AuthorsController(IAuthorsService authorsService)
+        public AuthorsController(IAuthorsService authorsService, IMapper mapper)
         {
             _authorsService = authorsService;
+            _mapper = mapper;
         }
 
         [HttpGet]
@@ -32,6 +36,30 @@ namespace BookHouse.API.Controllers
         public async Task<IActionResult> Create([FromBody] CreateAuthorDTO createAuthorDTO)
         {
             await _authorsService.Add(createAuthorDTO);
+
+            return NoContent();
+        }
+
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> Patch([FromRoute] int id, [FromBody] JsonPatchDocument<UpdateAuthorDTO> patchDocument)
+        {
+            AuthorDTO authorDTO = await _authorsService.GetById(id);
+
+            UpdateAuthorDTO updateAuthorDTO = _mapper.Map<AuthorDTO, UpdateAuthorDTO>(authorDTO);
+
+            patchDocument.ApplyTo(updateAuthorDTO);
+
+            AuthorDTO patchedAuthorDTO = _mapper.Map<UpdateAuthorDTO, AuthorDTO>(updateAuthorDTO);
+
+            await _authorsService.Update(id, patchedAuthorDTO);
+
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete([FromRoute] int id)
+        {
+            await _authorsService.DeleteById(id);
 
             return NoContent();
         }
