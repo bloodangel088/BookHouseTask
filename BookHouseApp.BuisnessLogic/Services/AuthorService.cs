@@ -1,10 +1,11 @@
-﻿using BookHouseApp.BuisnessLogic.DTOS.Author;
-using BookHouseApp.BuisnessLogic.Mapping;
+﻿using AutoMapper;
+using BookHouseApp.BuisnessLogic.DTOS.Author;
 using BookHouseApp.BuisnessLogic.Services.Contracts;
 using BookHouseApp.DataAccess.Database;
 using BookHouseApp.DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
-using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace BookHouseApp.BuisnessLogic.Services
@@ -12,43 +13,61 @@ namespace BookHouseApp.BuisnessLogic.Services
     public class AuthorService : IAuthorsService
     {
         private readonly DatabaseContext _databaseContext;
+        private readonly IMapper _mapper;
 
-        public AuthorService(DatabaseContext databaseContext)
+        public AuthorService(DatabaseContext databaseContext, IMapper mapper)
         {
             _databaseContext = databaseContext;
+            _mapper = mapper;
         }
 
-        public Task Add(CreateAuthorDTO createAuthorDTO)
+        public async Task Add(CreateAuthorDTO createAuthorDTO)
         {
-            throw new NotImplementedException();
+            Author author = _mapper.Map<CreateAuthorDTO, Author>(createAuthorDTO);
+            await _databaseContext.Authors.AddAsync(author);
+            await _databaseContext.SaveChangesAsync();
         }
 
-        public Task DeleteById(int id)
+        public async Task DeleteById(int id)
         {
-            throw new NotImplementedException();
+            Author authorToDelete = await _databaseContext.Authors.SingleOrDefaultAsync(author => author.Id == id)
+                ?? throw new KeyNotFoundException($"Author with id '{id}' does not exists.");
+
+            _databaseContext.Authors.Remove(authorToDelete);
+            await _databaseContext.SaveChangesAsync();
         }
 
         public async Task<AuthorDTO[]> GetAll()
         {
             Author[] authors = await _databaseContext.Authors
                 .AsNoTracking()
+                .Include(author => author.Books)
                 .ToArrayAsync();
 
-            return Mapper.MapFromAuthorToDtos(authors);
+            return _mapper.Map<Author[], AuthorDTO[]>(authors);
         }
 
         public async Task<AuthorDTO> GetById(int id)
         {
             Author author = await _databaseContext.Authors
                 .AsNoTracking()
-                .SingleOrDefaultAsync(author => author.Id == id);
+                .Include(author => author.Books)
+                .SingleOrDefaultAsync(author => author.Id == id)
+                ?? throw new KeyNotFoundException($"Author with id '{id}' does not exists.");
 
-            return Mapper.MapFromAuthorToDto(author);
+            return _mapper.Map<Author, AuthorDTO>(author);
         }
 
-        public Task Update(int id, UpdateAuthorDTO updateAuthorDTO)
+        public async Task Update(int id, AuthorDTO updateAuthorDTO)
         {
-            throw new NotImplementedException();
+            Author existingAuthor = await _databaseContext.Authors.SingleOrDefaultAsync(author => author.Id == id)
+                ?? throw new KeyNotFoundException($"Author with id '{id}' does not exists.");
+
+            _mapper.Map(updateAuthorDTO, existingAuthor);
+
+            _databaseContext.Update(existingAuthor);
+            await _databaseContext.SaveChangesAsync();
         }
+
     }
 }

@@ -1,6 +1,11 @@
+using BookHouse.API.Extensions;
+using BookHouse.API.Validators.Authors;
+using BookHouseApp.BuisnessLogic.Mapping;
 using BookHouseApp.BuisnessLogic.Services;
 using BookHouseApp.BuisnessLogic.Services.Contracts;
 using BookHouseApp.DataAccess.Database;
+using FluentValidation.AspNetCore;
+using Hellang.Middleware.ProblemDetails;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -12,12 +17,14 @@ namespace BookHouse.API
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IWebHostEnvironment environment)
         {
             Configuration = configuration;
+            Environment = environment;
         }
 
         public IConfiguration Configuration { get; }
+        private IWebHostEnvironment Environment { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -25,8 +32,18 @@ namespace BookHouse.API
             services.AddDbContext<DatabaseContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("DatabaseContext")));
 
+            services.AddProblemDetailsMapping(Environment);
+
+            services.AddAutoMapper(config => config.AddMaps(typeof(AuthorsProfile).Assembly));
             services.AddScoped<IAuthorsService, AuthorService>();
-            services.AddRazorPages();
+            services.AddAutoMapper(config => config.AddMaps(typeof(BookProfile).Assembly));
+            services.AddScoped<IBookService, BookService>();
+            services.AddControllers()
+                    .AddNewtonsoftJson()
+                    .AddFluentValidation(config =>
+                    {
+                        config.RegisterValidatorsFromAssemblyContaining(typeof(CreateAuthorValidator));
+                    });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -43,6 +60,8 @@ namespace BookHouse.API
                 app.UseHsts();
             }
 
+            app.UseProblemDetails();
+
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
@@ -52,7 +71,7 @@ namespace BookHouse.API
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapRazorPages();
+                endpoints.MapControllers();
             });
         }
     }
