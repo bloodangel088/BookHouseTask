@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using BookHouseApp.BuisnessLogic.DTOS.Author;
 using BookHouseApp.BuisnessLogic.Services.Contracts;
+using FluentValidation;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
@@ -13,11 +14,15 @@ namespace BookHouse.API.Controllers
     {
         private readonly IAuthorsService _authorsService;
         private readonly IMapper _mapper;
+        private readonly IValidator<UpdateAuthorDTO> _updateAuthorValidator;
 
-        public AuthorsController(IAuthorsService authorsService, IMapper mapper)
+        public AuthorsController(IAuthorsService authorsService, 
+                                 IMapper mapper, 
+                                 IValidator<UpdateAuthorDTO> updateAuthorValidator)
         {
             _authorsService = authorsService;
             _mapper = mapper;
+            _updateAuthorValidator = updateAuthorValidator;
         }
 
         [HttpGet]
@@ -48,6 +53,7 @@ namespace BookHouse.API.Controllers
             UpdateAuthorDTO updateAuthorDTO = _mapper.Map<AuthorDTO, UpdateAuthorDTO>(authorDTO);
 
             patchDocument.ApplyTo(updateAuthorDTO);
+            _updateAuthorValidator.ValidateAndThrow(updateAuthorDTO);
 
             AuthorDTO patchedAuthorDTO = _mapper.Map<UpdateAuthorDTO, AuthorDTO>(updateAuthorDTO);
 
