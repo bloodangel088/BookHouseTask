@@ -1,9 +1,12 @@
+using BookHouse.API.Extensions;
 using BookHouse.API.Validators.Authors;
 using BookHouseApp.BuisnessLogic.Mapping;
 using BookHouseApp.BuisnessLogic.Services;
 using BookHouseApp.BuisnessLogic.Services.Contracts;
 using BookHouseApp.DataAccess.Database;
 using FluentValidation.AspNetCore;
+using Hellang.Middleware.ProblemDetails;
+using MicroElements.Swashbuckle.FluentValidation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -15,16 +18,20 @@ namespace BookHouse.API
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IWebHostEnvironment environment)
         {
             Configuration = configuration;
+            Environment = environment;
         }
 
         public IConfiguration Configuration { get; }
+        public IWebHostEnvironment Environment { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddProblemDetailsMapping(Environment);
+
             services.AddDbContext<DatabaseContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("DatabaseContext")));
 
@@ -52,6 +59,8 @@ namespace BookHouse.API
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
+
+            app.UseProblemDetails();
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();

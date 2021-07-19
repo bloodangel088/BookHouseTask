@@ -5,6 +5,7 @@ using BookHouseApp.DataAccess.Database;
 using BookHouseApp.DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace BookHouseApp.BuisnessLogic.Services
@@ -30,7 +31,8 @@ namespace BookHouseApp.BuisnessLogic.Services
 
         public async Task DeleteById(int id)
         {
-            Author authorToDelete = await _databaseContext.Authors.FindAsync(id);
+            Author authorToDelete = await _databaseContext.Authors.SingleOrDefaultAsync(author => author.Id == id)
+                ?? throw new KeyNotFoundException($"Author with id '{id}' does not exists.");
 
             _databaseContext.Authors.Remove(authorToDelete);
             await _databaseContext.SaveChangesAsync();
@@ -51,14 +53,16 @@ namespace BookHouseApp.BuisnessLogic.Services
             Author author = await _databaseContext.Authors
                 .AsNoTracking()
                 .Include(author => author.Books)
-                .SingleOrDefaultAsync(author => author.Id == id);
+                .SingleOrDefaultAsync(author => author.Id == id)
+                ?? throw new KeyNotFoundException($"Author with id '{id}' does not exists.");
 
             return _mapper.Map<Author, AuthorDTO>(author);
         }
 
         public async Task Update(int id, AuthorDTO updateAuthorDTO)
         {
-            Author existingAuthor = await _databaseContext.Authors.SingleAsync(author => author.Id == id);
+            Author existingAuthor = await _databaseContext.Authors.SingleOrDefaultAsync(author => author.Id == id)
+                ?? throw new KeyNotFoundException($"Author with id '{id}' does not exists.");
 
             _mapper.Map(updateAuthorDTO, existingAuthor);
 
